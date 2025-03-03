@@ -1,0 +1,204 @@
+define topurg ranger
+(
+  sensor(
+    range [ 0.02 2.00 ]
+    fov 270.00
+    samples 540
+  )
+  # generic model properties
+  color "blue"
+  size [ 0.15 0.15 0.1 ]
+  block
+	( 
+	  points 16
+    point[0] [0.1 0. ]
+    point[1] [0.09244444 0.03822222]
+    point[2] [0.07066667 0.07066667]
+    point[3] [0.03822222 0.09244444]
+    point[4] [0.  0.1]
+    point[5] [-0.03822222  0.09244444]
+    point[6] [-0.07066667  0.07066667]
+    point[7] [-0.09244444  0.03822222]
+    point[8] [-0.1  0. ]
+    point[9] [-0.09244444 -0.03822222]
+    point[10] [-0.07066667 -0.07066667]
+    point[11] [-0.03822222 -0.09244444]
+    point[12] [-0.  -0.1]
+    point[13] [ 0.03822222 -0.09244444]
+    point[14] [ 0.07066667 -0.07066667]
+    point[15] [ 0.09244444 -0.03822222]
+	)
+)
+
+define pr2 position
+(
+  size [0.4 0.4 0.237]
+	block
+	( 
+	  points 16
+    point[0] [0.1 0. ]
+    point[1] [0.09244444 0.03822222]
+    point[2] [0.07066667 0.07066667]
+    point[3] [0.03822222 0.09244444]
+    point[4] [0.  0.1]
+    point[5] [-0.03822222  0.09244444]
+    point[6] [-0.07066667  0.07066667]
+    point[7] [-0.09244444  0.03822222]
+    point[8] [-0.1  0. ]
+    point[9] [-0.09244444 -0.03822222]
+    point[10] [-0.07066667 -0.07066667]
+    point[11] [-0.03822222 -0.09244444]
+    point[12] [-0.  -0.1]
+    point[13] [ 0.03822222 -0.09244444]
+    point[14] [ 0.07066667 -0.07066667]
+    point[15] [ 0.09244444 -0.03822222]
+	)
+  origin [0 0 0 0]
+  gui_nose 1
+  drive "diff"
+  topurg(pose [ 0.0 0 0 0 ])
+	trail_interval 1
+	trail_length 3000
+)
+define pr3 position
+(
+  size [0.4 0.4 0.237]
+	block
+	( 
+	  points 16
+    point[0] [0.1 0. ]
+    point[1] [0.09244444 0.03822222]
+    point[2] [0.07066667 0.07066667]
+    point[3] [0.03822222 0.09244444]
+    point[4] [0.  0.1]
+    point[5] [-0.03822222  0.09244444]
+    point[6] [-0.07066667  0.07066667]
+    point[7] [-0.09244444  0.03822222]
+    point[8] [-0.1  0. ]
+    point[9] [-0.09244444 -0.03822222]
+    point[10] [-0.07066667 -0.07066667]
+    point[11] [-0.03822222 -0.09244444]
+    point[12] [-0.  -0.1]
+    point[13] [ 0.03822222 -0.09244444]
+    point[14] [ 0.07066667 -0.07066667]
+    point[15] [ 0.09244444 -0.03822222]
+	)
+  origin [0 0 0 0]
+  gui_nose 1
+  drive "diff"
+  topurg(pose [ 0.0 0 0 0 ])
+	trail_interval 1
+	trail_length 3000
+)
+
+define pr14 position
+(
+  size [0.6 0.6 1.0]
+	block
+	( 
+	  points 16
+    point[0] [0.1 0. 1.0]
+    point[1] [0.09244444 0.03822222 1.0]
+    point[2] [0.07066667 0.07066667 1.0]
+    point[3] [0.03822222 0.09244444 1.0]
+    point[4] [0.  0.1 1.0]
+    point[5] [-0.03822222  0.09244444 1.0]
+    point[6] [-0.07066667  0.07066667 1.0]
+    point[7] [-0.09244444  0.03822222 1.0]
+    point[8] [-0.1  0. 1.0]
+    point[9] [-0.09244444 -0.03822222 1.0]
+    point[10] [-0.07066667 -0.07066667 1.0]
+    point[11] [-0.03822222 -0.09244444 1.0]
+    point[12] [-0.  -0.1 1.0]
+    point[13] [ 0.03822222 -0.09244444 1.0]
+    point[14] [ 0.07066667 -0.07066667 1.0]
+    point[15] [ 0.09244444 -0.03822222 1.0]
+	)
+  origin [0 0 0 0]
+  gui_nose 1
+)
+define pr15 position
+(
+  size [0.6 0.6 1.0]
+	block
+	( 
+	  points 16
+    point[0] [0.1 0. 1.0]
+    point[1] [0.09244444 0.03822222 1.0]
+    point[2] [0.07066667 0.07066667 1.0]
+    point[3] [0.03822222 0.09244444 1.0]
+    point[4] [0.  0.1 1.0]
+    point[5] [-0.03822222  0.09244444 1.0]
+    point[6] [-0.07066667  0.07066667 1.0]
+    point[7] [-0.09244444  0.03822222 1.0]
+    point[8] [-0.1  0. 1.0]
+    point[9] [-0.09244444 -0.03822222 1.0]
+    point[10] [-0.07066667 -0.07066667 1.0]
+    point[11] [-0.03822222 -0.09244444 1.0]
+    point[12] [-0.  -0.1 1.0]
+    point[13] [ 0.03822222 -0.09244444 1.0]
+    point[14] [ 0.07066667 -0.07066667 1.0]
+    point[15] [ 0.09244444 -0.03822222 1.0]
+	)
+  origin [0 0 0 0]
+  gui_nose 1
+)
+
+
+define floorplan model
+(
+  # sombre, sensible, artistic
+  color "gray30"
+
+  # most maps will need a bounding box
+  boundary 0
+
+  gui_nose 0
+  gui_grid 0
+
+  gui_outline 1
+  gripper_return 0
+  fiducial_return 0
+  ranger_return 1
+)
+
+# set the resolution of the underlying raytrace model in meters
+resolution 0.001
+threads 16
+interval_sim 100  # simulation timestep in milliseconds
+speedup 1
+window
+( 
+  #size [ 745.000 745.000 ] 
+  show_data 1
+  show_footprints 1
+  #rotate [ 0.000 0.000 ]
+  #scale 28.806 
+	trail_interval 2
+	trail_length 200
+)
+
+
+# load an environment bitmap
+floorplan
+( 
+  name "willow"
+  bitmap "./illu.jpg"
+  size [7.2 7.2 1.0]
+  pose [ 10.000 0.000 0 00.000 ]
+)
+floorplan
+( 
+  name "willow"
+  bitmap "./illu.jpg"
+  size [4.8 4.8 1.0]
+  pose [ 0.000 0.000 0 00.000 ]
+)
+
+
+# throw in a robot
+pr2( pose [ 0 0.0 0.0 90.000 ] name "pr2" color "black")
+pr3( pose [ 10 0.0 0.0 90.000 ] name "pr3" color "black")
+pr14( pose [ 0 1.5 1.0 90.000 ] name "pr14" color "red")
+pr15( pose [ 10 1.5 1.0 90.000 ] name "pr15" color "red")
+
