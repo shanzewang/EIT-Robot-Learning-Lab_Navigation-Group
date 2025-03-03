@@ -1,0 +1,2 @@
+model_checkpoint_path: "IPAPTrain_network_pi4_bcar_0221_7lambda0-69"
+all_model_checkpoint_paths: "IPAPTrain_network_pi4_bcar_0221_7lambda0-69"

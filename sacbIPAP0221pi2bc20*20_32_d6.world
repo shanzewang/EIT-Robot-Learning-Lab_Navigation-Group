@@ -1,0 +1,254 @@
+define block model
+(
+  size [0.5 0.5 0.5]
+  gui_nose 0
+)
+
+define topurg ranger
+(
+  sensor(
+    range [ 0.05 20.00 ]
+    fov 360.00
+    samples 1667
+  )
+  # generic model properties
+  color "black"
+  size [ 0.15 0.15 0.15 ]
+)
+
+
+define pr2 position
+(
+  size [0.62 0.64 0.24]  # L W H  +0.04
+  origin [0.17 0 0 0]     # 驱动中心相对于几何中心向前偏移
+  gui_nose 1
+  drive "omni"
+
+  block
+  (
+    size [0.1 0.1 0.001]  # 圆柱体的直径和高度
+    pose [ -0.075 0 0 0 ]  # 与topurg相同的位置
+    color "red"  
+  )
+
+  topurg(pose [ -0.075 0 0.30 0 ])  # 雷达相对于几何中心向前偏移0.17+0.075 = 0.245
+)
+
+define floorplan model
+(
+  # sombre, sensible, artistic
+  color "gray30"
+
+  # most maps will need a bounding box
+  boundary 0
+
+  gui_nose 0
+  gui_grid 0
+
+  gui_outline 0
+  gripper_return 0
+  fiducial_return 0
+  ranger_return 1
+)
+
+# set the resolution of the underlying raytrace model in meters
+resolution 0.01
+
+interval_sim 100  # simulation timestep in milliseconds
+speedup 3
+window
+( 
+
+  rotate [ 0.000 0.000 ]
+  scale 28.806 
+  show_data 1
+)
+
+
+# 第一行地图(从左到右)
+floorplan
+( 
+  name "willow"
+  bitmap "./d6.jpg"
+  size [20.0 20.0 1.0]
+  pose [ -40.000 40.000 0 00.000 ]
+)
+floorplan
+( 
+  name "willow"
+  bitmap "./d6.jpg"
+  size [20.0 16.0 1.0]
+  pose [ -40.000 20.000 0 00.000 ]
+)
+floorplan
+( 
+  name "willow"
+  bitmap "./d6.jpg"
+  size [20.0 12.8 1.0]
+  pose [ -40.000 0.000 0 00.000 ]
+)
+floorplan
+( 
+  name "willow"
+  bitmap "./d6.jpg"
+  size [20.0 10.24 1.0]
+  pose [ -40.000 -20.000 0 00.000 ]
+)
+floorplan
+( 
+  name "willow"
+  bitmap "./d6.jpg"
+  size [20.0 8.192 1.0]
+  pose [ -40.000 -40.000 0 00.000 ]
+)
+
+# 第二行地图
+floorplan
+( 
+  name "willow"
+  bitmap "./d6.jpg"
+  size [16.0 20.0 1.0]
+  pose [ -20.000 40.000 0 00.000 ]
+)
+floorplan
+( 
+  name "willow"
+  bitmap "./d6.jpg"
+  size [16.0 16.0 1.0]
+  pose [ -20.000 20.000 0 00.000 ]
+)
+floorplan
+( 
+  name "willow"
+  bitmap "./d6.jpg"
+  size [16.0 12.8 1.0]
+  pose [ -20.000 0.000 0 00.000 ]
+)
+floorplan
+( 
+  name "willow"
+  bitmap "./d6.jpg"
+  size [16.0 10.24 1.0]
+  pose [ -20.000 -20.000 0 00.000 ]
+)
+floorplan
+( 
+  name "willow"
+  bitmap "./d6.jpg"
+  size [16.0 8.192 1.0]
+  pose [ -20.000 -40.000 0 00.000 ]
+)
+
+# 第三行地图
+floorplan
+( 
+  name "willow"
+  bitmap "./d6.jpg"
+  size [12.8 20.0 1.0]
+  pose [ 0.000 40.000 0 00.000 ]
+)
+floorplan
+( 
+  name "willow"
+  bitmap "./d6.jpg"
+  size [12.8 16.0 1.0]
+  pose [ 0.000 20.000 0 00.000 ]
+)
+floorplan
+( 
+  name "willow"
+  bitmap "./d6.jpg"
+  size [12.8 12.8 1.0]
+  pose [ 0.000 0.000 0 00.000 ]
+)
+floorplan
+( 
+  name "willow"
+  bitmap "./d6.jpg"
+  size [12.8 10.24 1.0]
+  pose [ 0.000 -20.000 0 00.000 ]
+)
+floorplan
+( 
+  name "willow"
+  bitmap "./d6.jpg"
+  size [12.8 8.192 1.0]
+  pose [ 0.000 -40.000 0 00.000 ]
+)
+
+# 第四行地图
+floorplan
+( 
+  name "willow"
+  bitmap "./d6.jpg"
+  size [10.24 20.0 1.0]
+  pose [ 20.000 40.000 0 00.000 ]
+)
+floorplan
+( 
+  name "willow"
+  bitmap "./d6.jpg"
+  size [10.24 16.0 1.0]
+  pose [ 20.000 20.000 0 00.000 ]
+)
+floorplan
+( 
+  name "willow"
+  bitmap "./d6.jpg"
+  size [10.24 12.8 1.0]
+  pose [ 20.000 0.000 0 00.000 ]
+)
+floorplan
+( 
+  name "willow"
+  bitmap "./d6.jpg"
+  size [10.24 10.24 1.0]
+  pose [ 20.000 -20.000 0 00.000 ]
+)
+floorplan
+( 
+  name "willow"
+  bitmap "./d6.jpg"
+  size [10.24 8.192 1.0]
+  pose [ 20.000 -40.000 0 00.000 ]
+)
+
+# 第五行地图
+floorplan
+( 
+  name "willow"
+  bitmap "./d6.jpg"
+  size [8.192 20.0 1.0]
+  pose [ 40.000 40.000 0 00.000 ]
+)
+floorplan
+( 
+  name "willow"
+  bitmap "./d6.jpg"
+  size [8.192 16.0 1.0]
+  pose [ 40.000 20.000 0 00.000 ]
+)
+floorplan
+( 
+  name "willow"
+  bitmap "./d6.jpg"
+  size [8.192 12.8 1.0]
+  pose [ 40.000 0.000 0 00.000 ]
+)
+floorplan
+( 
+  name "willow"
+  bitmap "./d6.jpg"
+  size [8.192 10.24 1.0]
+  pose [ 40.000 -20.000 0 00.000 ]
+)
+floorplan
+( 
+  name "willow"
+  bitmap "./d6.jpg"
+  size [8.192 8.192 1.0]
+  pose [ 40.000 -40.000 0 00.000 ]
+)
+
+# 机器人初始位置
+pr2( pose [ -40 40 0 -90.000 ] name "pr2" color "blue")
