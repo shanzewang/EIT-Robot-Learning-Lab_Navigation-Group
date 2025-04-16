@@ -728,7 +728,7 @@ if __name__ == '__main__':
 
     # Launch the simulation with the given launchfile name
 
-    subprocess.Popen(["rosrun", "stage_ros1", "stageros", "Obstacles3.world"])
+    subprocess.Popen(["rosrun", "stage_ros1", "stageros", "d8888153.world"])
     print("environment launched!")
     time.sleep(2)
     main()
