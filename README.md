@@ -1,5 +1,9 @@
 core_config_GMM_ada_shape_vel_acc为网络文件；
+
 SPN_ours_1e6为主运行文件；
+
 stage_obs_ada_shape_vel_test为环境及配置包含step function文件；
+
 d8888153.world为world文件；
+
 network文件夹中包含测试效果最好的网络；
