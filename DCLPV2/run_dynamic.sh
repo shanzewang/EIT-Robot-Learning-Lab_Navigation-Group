@@ -14,7 +14,7 @@ cleanup() {
     echo "正在清理所有相关进程..."
     pkill -9 -f sac_torch_dynamic.py
     pkill -9 stage
-    pkill -9 -f stageros
+    pkill -9 -f stageros1
     pkill -9 -f roscore
     echo "完全终止程序"
 }

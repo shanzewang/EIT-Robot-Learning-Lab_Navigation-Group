@@ -52,6 +52,7 @@ class StageWorld:
         self.start_time = time.time()
         self.max_steps = 10000
         self.gap = 0.5
+        self.last_position = [0.0, 0.0, 0.0]  # 初始化位置缓存
 
         self.scan = None
         self.beam_num = beam_num
@@ -124,6 +125,18 @@ class StageWorld:
         self.cmd_vel = rospy.Publisher('/robot_0/cmd_vel', Twist, queue_size=100)
         self.pose_publisher = rospy.Publisher('/robot_0/cmd_pose', Pose2D, queue_size=1000)
         rospy.loginfo("Publisher Created: /robot_0/cmd_pose")
+        
+        # 创建7个roomba的Publisher，避免在set_robot_pose中重复创建
+        self.roomba_publishers = []
+        for i in range(7):
+            roomba_topic = f'/robot_{i+1}/cmd_pose'
+            try:
+                roomba_publisher = rospy.Publisher(roomba_topic, Pose2D, queue_size=10)
+                self.roomba_publishers.append(roomba_publisher)
+                rospy.loginfo(f"Publisher Created: {roomba_topic}")
+            except Exception as e:
+                rospy.logwarn(f"无法创建Publisher {roomba_topic}: {e}")
+                self.roomba_publishers.append(None)  # 占位符，防止索引错误
 
         self.object_state_sub = rospy.Subscriber(
             '/robot_0/base_pose_ground_truth', Odometry, self.GroundTruthCallBack
@@ -195,7 +208,14 @@ class StageWorld:
             )
         robot_pose_data.x = x + self.map_center[self.env, 0]
         robot_pose_data.y = y + self.map_center[self.env, 1]
-        self.pose_publisher.publish(robot_pose_data)
+        
+        # 设置主机器人位置
+        try:
+            self.pose_publisher.publish(robot_pose_data)
+            rospy.sleep(0.5)  # 给主机器人位置更新一些时间
+        except Exception as e:
+            rospy.logwarn(f"设置主机器人位置失败: {e}")
+        
         # 为7个roomba设置位置，沿着当前环境的对角线均匀分布
         # 获取当前环境的大小和中心
         current_map_size = self.map_sizes[self.env]
@@ -217,33 +237,41 @@ class StageWorld:
         # 为7个roomba均匀分配位置
         num_roomba = 7
         for i in range(num_roomba):
-            # 计算对角线上的位置比例（从0到1）
-            ratio = (i + 0.5) / num_roomba
-            
-            # 计算相对于环境中心的位置
-            roomba_rel_x = top_left_x + dx * diagonal_length * ratio
-            roomba_rel_y = top_left_y + dy * diagonal_length * ratio
-            
-            # 计算绝对位置（加上环境中心）
-            roomba_abs_x = roomba_rel_x + current_map_center[0]
-            roomba_abs_y = roomba_rel_y + current_map_center[1]
-            
-            # 创建并发布roomba位置
-            roomba_pose = Pose2D()
-            roomba_pose.x = roomba_abs_x
-            roomba_pose.y = roomba_abs_y
-            roomba_pose.theta = 0.0  # 设置初始方向为0
-            
-            # 发布位置 - 需要确保有对应的发布器
-            # 这里假设你已经创建了相应的发布器，名为 self.roomba_publishers[i]
-            # 如果没有，需要先创建，例如：
-            # self.roomba_publishers = [rospy.Publisher(f'/robot_{i+1}/cmd_pose', Pose2D, queue_size=1000) for i in range(num_roomba)]
-            roomba_topic = f'/robot_{i+1}/cmd_pose'
             try:
-                roomba_publisher = rospy.Publisher(roomba_topic, Pose2D, queue_size=10)
-                roomba_publisher.publish(roomba_pose)
+                # 计算对角线上的位置比例（从0到1）
+                ratio = (i + 0.5) / num_roomba
+                
+                # 计算相对于环境中心的位置
+                roomba_rel_x = top_left_x + dx * diagonal_length * ratio
+                roomba_rel_y = top_left_y + dy * diagonal_length * ratio
+
+                # 计算绝对位置（加上环境中心）
+                roomba_abs_x = roomba_rel_x + current_map_center[0]
+                roomba_abs_y = roomba_rel_y + current_map_center[1]
+                
+                # 创建并发布roomba位置
+                roomba_pose = Pose2D()
+                roomba_pose.x = roomba_abs_x
+                roomba_pose.y = roomba_abs_y
+                roomba_pose.theta = 0.0  # 设置初始方向为0
+                
+                # 使用预创建的Publisher发布位置，避免重复创建Publisher
+                if i < len(self.roomba_publishers) and self.roomba_publishers[i] is not None:
+                    try:
+                        self.roomba_publishers[i].publish(roomba_pose)
+                        # 在每个roomba位置设置后稍作停顿，避免过度负载仿真器
+                        rospy.sleep(0.5)
+                    except Exception as e:
+                        rospy.logwarn(f"无法发布到 /robot_{i+1}/cmd_pose: {e}")
+                else:
+                    rospy.logwarn(f"Publisher for /robot_{i+1}/cmd_pose not available")
+                    
             except Exception as e:
-                rospy.logwarn(f"无法发布到 {roomba_topic}: {e}")    
+                rospy.logwarn(f"设置roomba {i+1}位置时出错: {e}")
+                continue  # 继续设置下一个roomba
+        
+        # 在所有位置设置完成后等待仿真器稳定
+        rospy.sleep(1.0)
 
     def targetPointCheck(self, x, y):
         target_x = x
@@ -252,6 +280,7 @@ class StageWorld:
         x_pixel = int(target_x * self.R2P[0] + self.map_origin[0])
         y_pixel = int(target_y * self.R2P[1] + self.map_origin[1])
         window_size = int(self.target_size * np.amax(self.R2P))
+        print(f"targetPointCheck: x_pixel={x_pixel}, y_pixel={y_pixel}, window_size={window_size}")
         for x in range(
             np.amax([0, x_pixel - window_size]),
             np.amin([self.map_pixel[0] - 1, x_pixel + window_size]),
@@ -267,6 +296,7 @@ class StageWorld:
                 break
         #        if abs(target_x) < 2. and abs(target_y) < 2.:
         #            pass_flag = False
+        print(f"targetPointCheck: pass_flag={pass_flag}")
         return pass_flag
 
     def robotPointCheck(self, x, y):
@@ -307,6 +337,8 @@ class StageWorld:
         ]
         self.scan = np.array(scan.ranges)
         self.laser_cb_num += 1
+        # 记录激光数据更新时间
+        self.last_scan_time = time.time()
 
     def OdometryCallBack(self, odometry):
         Quaternions = odometry.pose.pose.orientation
@@ -393,44 +425,71 @@ class StageWorld:
         return self.sim_time
 
     def ResetWorld(self, env_no, length1, length2, width):
-        rospy.sleep(4.0)
-        self.past_actions = deque(maxlen=2)
-        for initial_zero in range(2):
-            self.past_actions.append(0)
-        self.max_action[0] = 2.0
-        self.max_action[1] = np.pi
-        self.max_acc[0] = 2.5
-        self.max_acc[1] = 3.2
-        print("action bound is", self.max_action)
-        self.length1 = length1
-        self.length2 = length2
-        self.width = width
-        self.robot_range_x1 = self.length1 + 0.15
-        self.robot_range_x2 = self.length2 + 0.15
-        self.robot_range_y = self.width + 0.15
-        self.stop_counter = 0.0
-        self.crash_stop = False
-        self.env = env_no
-        self.map_size = self.map_sizes[env_no]
-        if env_no < 2:
-            self.target_size = 0.6
-        elif env_no < 5:
-            self.target_size = 0.4
-        else:
-            self.target_size = 0.3
-        self.R2P = self.map_pixel / self.map_size
-        self.set_robot_pose()
-        self.stalls
-        self.self_speed = [0.0, 0.0]
-        self.step_target = [0.0, 0.0]
-        self.step_r_cnt = 0.0
-        self.ratio = 1.0
-        self.start_time = time.time()
-        rospy.sleep(3.0)
-        return self.max_action[0]
+        # 增加初始等待时间，确保仿真器稳定
+        rospy.sleep(5.0)  # 从4.0增加到5.0
+        
+        try:
+            self.past_actions = deque(maxlen=2)
+            for initial_zero in range(2):
+                self.past_actions.append(0)
+            self.max_action[0] = 2.0
+            self.max_action[1] = np.pi
+            self.max_acc[0] = 2.5
+            self.max_acc[1] = 3.2
+            print("action bound is", self.max_action)
+            self.length1 = length1
+            self.length2 = length2
+            self.width = width
+            self.robot_range_x1 = self.length1 + 0.15
+            self.robot_range_x2 = self.length2 + 0.15
+            self.robot_range_y = self.width + 0.15
+            self.stop_counter = 0.0
+            self.crash_stop = False
+            self.env = env_no
+            self.map_size = self.map_sizes[env_no]
+            if env_no < 2:
+                self.target_size = 0.6
+            elif env_no < 5:
+                self.target_size = 0.4
+            else:
+                self.target_size = 0.3
+            self.R2P = self.map_pixel / self.map_size
+            
+            # 添加异常处理的机器人位置设置
+            try:
+                self.set_robot_pose()
+                rospy.sleep(1.0)  # 增加额外的等待时间
+            except Exception as e:
+                rospy.logwarn(f"设置机器人位置时出错: {e}")
+                # 如果设置失败，等待更长时间后重试
+                rospy.sleep(1.0)
+                try:
+                    self.set_robot_pose()
+                except Exception as retry_e:
+                    rospy.logerr(f"重试设置机器人位置仍失败: {retry_e}")
+            
+            self.stalled = False
+            self.self_speed = [0.0, 0.0]
+            self.step_target = [0.0, 0.0]
+            self.step_r_cnt = 0.0
+            self.ratio = 1.0
+            self.start_time = time.time()
+            
+            # 增加最终等待时间
+            rospy.sleep(3.0)  # 从3.0增加到4.0
+            return self.max_action[0]
+            
+        except Exception as e:
+            rospy.logerr(f"ResetWorld过程中发生错误: {e}")
+            # 紧急情况下只重置基本参数
+            self.crash_stop = False
+            self.stalled = False
+            self.self_speed = [0.0, 0.0]
+            rospy.sleep(3.0)  # 给仿真器更多恢复时间
+            return self.max_action[0]
 
     def Reset(self, env_no):
-        rospy.sleep(4.0)
+        rospy.sleep(3.0)
         self.past_actions = deque(maxlen=2)
         for initial_zero in range(2):
             self.past_actions.append(0)
@@ -444,7 +503,7 @@ class StageWorld:
             self.target_size = 0.4
         self.R2P = self.map_pixel / self.map_size
         #        self.set_robot_pose()
-        self.stalls
+        self.stalled = False
         self.self_speed = [0.0, 0.0]
         self.step_target = [0.0, 0.0]
         self.step_r_cnt = 0.0
@@ -530,16 +589,14 @@ class StageWorld:
             roomba_pose.y = roomba_abs_y
             roomba_pose.theta = 0.0  # 设置初始方向为0
             
-            # 发布位置 - 需要确保有对应的发布器
-            # 这里假设你已经创建了相应的发布器，名为 self.roomba_publishers[i]
-            # 如果没有，需要先创建，例如：
-            # self.roomba_publishers = [rospy.Publisher(f'/robot_{i+1}/cmd_pose', Pose2D, queue_size=1000) for i in range(num_roomba)]
-            roomba_topic = f'/robot_{i+1}/cmd_pose'
-            try:
-                roomba_publisher = rospy.Publisher(roomba_topic, Pose2D, queue_size=10)
-                roomba_publisher.publish(roomba_pose)
-            except Exception as e:
-                rospy.logwarn(f"无法发布到 {roomba_topic}: {e}")    
+            # 使用预创建的Publisher发布位置，避免重复创建Publisher
+            if i < len(self.roomba_publishers) and self.roomba_publishers[i] is not None:
+                try:
+                    self.roomba_publishers[i].publish(roomba_pose)
+                except Exception as e:
+                    rospy.logwarn(f"无法发布到 /robot_{i+1}/cmd_pose: {e}")
+            else:
+                rospy.logwarn(f"Publisher for /robot_{i+1}/cmd_pose not available")
         return self.robot_size
     
     def GenerateTargetPoint_test(self, k, env_index, shape_no):
@@ -564,6 +621,17 @@ class StageWorld:
         # stop turtlebot
         rospy.loginfo("Stop Moving")
         self.cmd_vel.publish(Twist())
+        
+        # 清理roomba Publishers
+        rospy.loginfo("Cleaning up roomba publishers")
+        for i, publisher in enumerate(self.roomba_publishers):
+            if publisher is not None:
+                try:
+                    publisher.unregister()
+                    rospy.loginfo(f"Unregistered publisher for /robot_{i+1}/cmd_pose")
+                except Exception as e:
+                    rospy.logwarn(f"Error unregistering publisher for /robot_{i+1}/cmd_pose: {e}")
+        
         rospy.sleep(1)
 
     def goal_to_robot(self, goal_pose, robot_pose):
@@ -700,30 +768,64 @@ class StageWorld:
         xx = xx - self.map_center[self.env, 0]
         yy = yy - self.map_center[self.env, 1]
         
+        # 计算有效范围
+        x_min = max(-(self.map_size[0] / 2 - self.target_size), xx - local_window)
+        x_max = min((self.map_size[0] / 2 - self.target_size), xx + local_window)
+        y_min = max(-(self.map_size[1] / 2 - self.target_size), yy - local_window)
+        y_max = min((self.map_size[1] / 2 - self.target_size), yy + local_window)
+        
+        # 检查是否有有效范围
+        if x_min >= x_max or y_min >= y_max:
+            print(f"WARNING: 目标点生成范围无效! x_range=[{x_min:.3f}, {x_max:.3f}], y_range=[{y_min:.3f}, {y_max:.3f}]")
+            print(f"  机器人位置: [{xx:.3f}, {yy:.3f}], local_window: {local_window:.3f}")
+            print(f"  地图尺寸: {self.map_size}, target_size: {self.target_size}")
+            # 使用更大的范围作为备用
+            x_min = -(self.map_size[0] / 2 - self.target_size)
+            x_max = (self.map_size[0] / 2 - self.target_size)
+            y_min = -(self.map_size[1] / 2 - self.target_size)
+            y_max = (self.map_size[1] / 2 - self.target_size)
+            
         # 当环境达到最高级别(4)时，添加调试信息
         if self.env == 4 and suc_rate > 0.8:
             print(f"[DEBUG] 最高级别地图(env=4)目标点生成: suc_rate={suc_rate:.3f}, "
                   f"local_window={local_window:.3f}, 地图尺寸={self.map_size[0]:.3f}")
             print(f"  机器人相对位置: [{xx:.3f}, {yy:.3f}]")
-        #        x = random.uniform(-(self.map_size[0]/2 - self.target_size), self.map_size[0]/2 - self.target_size)
-        #        y = random.uniform(-(self.map_size[1]/2 - self.target_size), self.map_size[1]/2 - self.target_size)
-        x = random.uniform(
-            max(-(self.map_size[0] / 2 - self.target_size), xx - local_window),
-            min((self.map_size[0] / 2 - self.target_size), xx + local_window),
-        )
-        y = random.uniform(
-            max(-(self.map_size[1] / 2 - self.target_size), yy - local_window),
-            min((self.map_size[1] / 2 - self.target_size), yy + local_window),
-        )
-        while not self.targetPointCheck(x, y) and not rospy.is_shutdown():
-            x = random.uniform(
-                max(-(self.map_size[0] / 2 - self.target_size), xx - local_window),
-                min((self.map_size[0] / 2 - self.target_size), xx + local_window),
-            )
-            y = random.uniform(
-                max(-(self.map_size[1] / 2 - self.target_size), yy - local_window),
-                min((self.map_size[1] / 2 - self.target_size), yy + local_window),
-            )
+            print(f"  搜索范围: x=[{x_min:.3f}, {x_max:.3f}], y=[{y_min:.3f}, {y_max:.3f}]")
+        
+        # 初始目标点生成
+        x = random.uniform(x_min, x_max)
+        y = random.uniform(y_min, y_max)
+        
+        # 添加重试次数限制，防止无限循环
+        max_attempts = 500  # 最大尝试次数
+        attempt_count = 0
+        
+        while not self.targetPointCheck(x, y) and not rospy.is_shutdown() and attempt_count < max_attempts:
+            x = random.uniform(x_min, x_max)
+            y = random.uniform(y_min, y_max)
+            attempt_count += 1
+            
+            # 每50次尝试打印一次调试信息
+            if attempt_count % 50 == 0:
+                print(f"目标点生成尝试 {attempt_count}/{max_attempts}, 当前位置: [{x:.3f}, {y:.3f}]")
+        
+        # 如果达到最大尝试次数仍未找到有效位置
+        if attempt_count >= max_attempts:
+            print(f"WARNING: 目标点生成达到最大尝试次数({max_attempts})，使用最后生成的位置")
+            print(f"  最终位置: [{x:.3f}, {y:.3f}], 检查结果: {self.targetPointCheck(x, y)}")
+            # 强制扩大搜索范围，使用整个地图
+            fallback_attempts = 100
+            for _ in range(fallback_attempts):
+                x = random.uniform(-(self.map_size[0] / 2 - self.target_size), 
+                                 (self.map_size[0] / 2 - self.target_size))
+                y = random.uniform(-(self.map_size[1] / 2 - self.target_size), 
+                                 (self.map_size[1] / 2 - self.target_size))
+                if self.targetPointCheck(x, y):
+                    print(f"  备用搜索成功，使用位置: [{x:.3f}, {y:.3f}]")
+                    break
+            else:
+                print(f"  备用搜索也失败，强制使用位置: [{x:.3f}, {y:.3f}]")
+        
         self.target_point = [
             x + self.map_center[self.env, 0],
             y + self.map_center[self.env, 1],
@@ -735,6 +837,23 @@ class StageWorld:
         if self.env == 4 and suc_rate > 0.8:
             print(f"  生成目标点(相对): [{x:.3f}, {y:.3f}], 距离: {self.pre_distance:.3f}")
             print(f"  生成目标点(绝对): [{self.target_point[0]:.3f}, {self.target_point[1]:.3f}]")
+            print(f"  尝试次数: {attempt_count}")
+            
+        # 记录生成统计信息
+        if not hasattr(self, 'target_generation_stats'):
+            self.target_generation_stats = {'total_attempts': 0, 'max_attempts_used': 0}
+        self.target_generation_stats['total_attempts'] += attempt_count
+        self.target_generation_stats['max_attempts_used'] = max(
+            self.target_generation_stats['max_attempts_used'], attempt_count)
+        
+        # 每100次调用打印一次统计信息
+        if not hasattr(self, 'generation_call_count'):
+            self.generation_call_count = 0
+        self.generation_call_count += 1
+        if self.generation_call_count % 100 == 0:
+            avg_attempts = self.target_generation_stats['total_attempts'] / self.generation_call_count
+            print(f"目标点生成统计(调用{self.generation_call_count}次): "
+                  f"平均尝试{avg_attempts:.1f}次, 最大尝试{self.target_generation_stats['max_attempts_used']}次")
 
     def GetLocalTarget(self):
         [x, y, theta] = self.GetSelfStateGT()
@@ -1051,6 +1170,51 @@ class StageWorld:
         
         # 返回最大速度 - 与训练时保持一致
         return self.max_action[0]
+
+    def check_stage_health(self):
+        """检查Stage仿真器健康状态"""
+        try:
+            # 检查激光数据是否更新
+            if hasattr(self, 'last_scan_time'):
+                current_time = time.time()
+                if current_time - self.last_scan_time > 5.0:  # 5秒无数据更新
+                    print("WARNING: 激光数据超过5秒未更新")
+                    return False
+            
+            # 检查机器人位置是否有变化
+            if hasattr(self, 'last_position_check'):
+                current_pos = self.GetSelfStateGT()
+                if hasattr(self, 'last_position') and current_pos:
+                    pos_diff = ((current_pos[0] - self.last_position[0])**2 + 
+                               (current_pos[1] - self.last_position[1])**2)**0.5
+                    if pos_diff < 0.001 and time.time() - self.last_position_check > 10.0:
+                        print("WARNING: 机器人位置超过10秒未变化")
+                        return False
+                self.last_position = current_pos
+                self.last_position_check = time.time()
+            else:
+                self.last_position_check = time.time()
+                self.last_position = self.GetSelfStateGT()
+            
+            # 检查ROS节点是否还在运行
+            if rospy.is_shutdown():
+                print("WARNING: ROS节点已关闭")
+                return False
+            
+            # 检查scan数据是否有效
+            if self.scan is not None:
+                if len(self.scan) == 0 or np.all(np.isnan(self.scan)):
+                    print("WARNING: 激光扫描数据无效")
+                    return False
+            else:
+                print("WARNING: 激光扫描数据为None")
+                return False
+                
+            return True
+            
+        except Exception as e:
+            rospy.logwarn(f"健康检查出错: {e}")
+            return False
 
 
 #    def GoalPublish(self, pose):
