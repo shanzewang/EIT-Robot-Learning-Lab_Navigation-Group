@@ -8,7 +8,7 @@ define topurg ranger
   sensor(
     range [ 0.02 15.0 ]
     fov 360.00
-    samples 720
+    samples 540
   )
   # generic model properties
   color "black"

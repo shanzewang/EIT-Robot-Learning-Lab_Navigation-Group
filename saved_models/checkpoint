@@ -1,0 +1,2 @@
+model_checkpoint_path: "configback540GMMdense1lambda1-1"
+all_model_checkpoint_paths: "configback540GMMdense1lambda1-1"

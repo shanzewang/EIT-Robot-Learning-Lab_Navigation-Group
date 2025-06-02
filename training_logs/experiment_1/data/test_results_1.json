@@ -1,0 +1,46 @@
+[
+  {
+    "test_round": 1,
+    "timestamp": "2025-05-31T23:25:28.698430",
+    "overall_success_rate": 0.08399999999999999,
+    "group_results": {
+      "0": {
+        "success_rate": 0.12,
+        "avg_reward": 8.983950089417595,
+        "collision_rate": 0.12,
+        "test_count": 50
+      },
+      "1": {
+        "success_rate": 0.12,
+        "avg_reward": 8.23623703285674,
+        "collision_rate": 0.08,
+        "test_count": 50
+      },
+      "2": {
+        "success_rate": 0.12,
+        "avg_reward": 6.243272388497035,
+        "collision_rate": 0.08,
+        "test_count": 50
+      },
+      "3": {
+        "success_rate": 0.04,
+        "avg_reward": 4.467517684600975,
+        "collision_rate": 0.16,
+        "test_count": 50
+      },
+      "4": {
+        "success_rate": 0.02,
+        "avg_reward": 2.7330987320462405,
+        "collision_rate": 0.12,
+        "test_count": 50
+      }
+    },
+    "env_progression": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ]
+  }
+]
